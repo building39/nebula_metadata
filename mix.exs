@@ -14,7 +14,11 @@ defmodule NebulaMetadata.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger, :riak],
+    [applications: [:logger,
+                    :riak,
+                    :poison,
+                    :logger_file_backend
+                   ],
      env: [riak_bucket_type: <<"cdmi">>,
            riak_bucket_name: <<"cdmi">>,
            riak_cdmi_index: <<"cdmi_idx">>,
@@ -36,7 +40,8 @@ defmodule NebulaMetadata.Mixfile do
   defp deps do
     [{:logger_file_backend, "~> 0.0"},
      {:riak, "~> 1.0"},
-     {:poison, "~> 2.0"}
+     {:poison, "~> 2.0"},
+     {:exrm, "~> 1.0"}
     ]
   end
 end
