@@ -8,7 +8,7 @@ defmodule NebulaMetadata.Server do
   end
 
   def init([state]) do
-    Logger.debug "Server init"
+#    Logger.debug "Server init"
     {:ok, state}
   end
 
@@ -40,9 +40,6 @@ defmodule NebulaMetadata.Server do
   end
 
   defp get(key, state) do
-    Logger.debug("In get")
-    IO.inspect(state.bucket)
-    IO.inspect(key)
     obj = Riak.find(state.bucket, key)
     Logger.debug("Back from Riak.find")
     json = case obj do
@@ -58,7 +55,6 @@ defmodule NebulaMetadata.Server do
     put(key, stringdata, state)
   end
   defp put(key, data, state) do
-    Logger.debug("In put")
     obj = Riak.find(state.bucket, key)
     case obj do
       nil ->
