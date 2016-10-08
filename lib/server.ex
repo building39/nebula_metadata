@@ -8,7 +8,6 @@ defmodule NebulaMetadata.Server do
   end
 
   def init([state]) do
-#    Logger.debug "Server init"
     {:ok, state}
   end
 
@@ -35,13 +34,11 @@ defmodule NebulaMetadata.Server do
   end
 
   defp delete(key, state) do
-    Logger.debug("In delete")
     Riak.delete(state.bucket, key)
   end
 
   defp get(key, state) do
     obj = Riak.find(state.bucket, key)
-    Logger.debug("Back from Riak.find")
     json = case obj do
              nil -> nil
              _ -> obj.data
@@ -66,21 +63,19 @@ defmodule NebulaMetadata.Server do
   end
 
   defp search(query, state) do
-    Logger.debug("In search")
     {:ok, {:search_results, results, _score, count}} = Riak.Search.query(state.cdmi_index, query)
     case count do
-      1 -> get_data(results, state)
-      0 -> {:notfound, query}
+      1 -> {:ok, get_data(results, state)}
+      0 -> {:not_found, query}
       _ -> {:multiples, results, count}
     end
 
   end
 
   defp update(key, data, state) do
-    Logger.debug("In update")
     obj = Riak.find(state.bucket, key)
     case obj do
-      nil -> {:notfound, nil}
+      nil -> {:not_found, nil}
       _ ->
         obj = %{obj | data: data}
         {:ok, Riak.put(obj).data}
