@@ -39,12 +39,10 @@ defmodule NebulaMetadata.Server do
 
   defp get(key, state) do
     obj = Riak.find(state.bucket, key)
-    json = case obj do
-             nil -> nil
-             _ -> obj.data
+    data = case obj do
+             nil -> {:not_found, key}
+             _   -> Poison.decode(obj.data, keys: :atoms)
     end
-    {:ok, data} = Poison.decode(json, keys: :atoms)
-    data
   end
 
   defp put(key, data, state) when is_map(data) do
@@ -65,11 +63,10 @@ defmodule NebulaMetadata.Server do
   defp search(query, state) do
     {:ok, {:search_results, results, _score, count}} = Riak.Search.query(state.cdmi_index, query)
     case count do
-      1 -> {:ok, get_data(results, state)}
+      1 -> get_data(results, state)
       0 -> {:not_found, query}
       _ -> {:multiples, results, count}
     end
-
   end
 
   defp update(key, data, state) do
