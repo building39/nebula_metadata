@@ -33,10 +33,12 @@ defmodule NebulaMetadata.Server do
     {:reply, {:badrequest, request}, state}
   end
 
+  @spec delete(charlist, map) :: any
   defp delete(key, state) do
     Riak.delete(state.bucket, key)
   end
 
+  @spec get(charlist, map) :: {atom, map}
   defp get(key, state) do
     obj = Riak.find(state.bucket, key)
     case obj do
@@ -46,11 +48,13 @@ defmodule NebulaMetadata.Server do
     end
   end
 
+  @spec put(charlist, map, map) :: any
   defp put(key, data, state) when is_map(data) do
     {:ok, stringdata} = Poison.encode(data)
     put(key, stringdata, state)
   end
-  defp put(key, data, state) do
+  @spec put(charlist, charlist, map) :: any
+  defp put(key, data, state) when is_list(data) do
     obj = Riak.find(state.bucket, key)
     case obj do
       nil ->
@@ -61,6 +65,7 @@ defmodule NebulaMetadata.Server do
     end
   end
 
+  @spec search(charlist, map) :: {atom, map}
   defp search(query, state) do
     {:ok, {:search_results, results, _score, count}} = Riak.Search.query(state.cdmi_index, query)
     case count do
@@ -70,7 +75,13 @@ defmodule NebulaMetadata.Server do
     end
   end
 
-  defp update(key, data, state) do
+  @spec update(charlist, map, map) :: any
+  defp update(key, data, state) when is_map(data) do
+    {:ok, stringdata} = Poison.encode(data)
+    update(key, stringdata, state)
+  end
+  @spec update(charlist, map, map) :: any
+  defp update(key, data, state) when is_list(data) do
     obj = Riak.find(state.bucket, key)
     case obj do
       nil -> {:not_found, nil}
@@ -80,7 +91,8 @@ defmodule NebulaMetadata.Server do
     end
   end
 
-  def get_data(results, state) do
+  @spec get_data(list, list) :: {atom, map}
+  defp get_data(results, state) do
     {_, rlist} = List.keyfind(results, state.cdmi_index, 0)
     {_, key} = List.keyfind(rlist, "_yz_rk", 0)
     get(key, state)
