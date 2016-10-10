@@ -39,9 +39,10 @@ defmodule NebulaMetadata.Server do
 
   defp get(key, state) do
     obj = Riak.find(state.bucket, key)
-    data = case obj do
-             nil -> {:not_found, key}
-             _   -> Poison.decode(obj.data, keys: :atoms)
+    case obj do
+      nil -> {:not_found, key}
+      _   -> {:ok, data} = Poison.decode(obj.data, keys: :atoms)
+             {:ok, data.cdmi}
     end
   end
 
