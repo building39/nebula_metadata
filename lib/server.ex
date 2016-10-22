@@ -81,7 +81,7 @@ defmodule NebulaMetadata.Server do
     update(key, stringdata, state)
   end
   @spec update(charlist, map, map) :: any
-  defp update(key, data, state) when is_list(data) do
+  defp update(key, data, state) when is_binary(data) do
     obj = Riak.find(state.bucket, key)
     case obj do
       nil -> {:not_found, nil}
@@ -96,6 +96,20 @@ defmodule NebulaMetadata.Server do
     {_, rlist} = List.keyfind(results, state.cdmi_index, 0)
     {_, key} = List.keyfind(rlist, "_yz_rk", 0)
     get(key, state)
+  end
+
+  @doc """
+  Calculate a hash for a domain.
+  """
+  @spec get_domain_hash(charlist) :: charlist
+  def get_domain_hash(domain) when is_list(domain) do
+    get_domain_hash(<<domain>>)
+  end
+  @spec get_domain_hash(binary) :: charlist
+  def get_domain_hash(domain) when is_binary(domain) do
+    :crypto.hmac(:sha, <<"domain">>, domain)
+    |> Base.encode16
+    |> String.downcase
   end
 
 end
