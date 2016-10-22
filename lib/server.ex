@@ -34,12 +34,20 @@ defmodule NebulaMetadata.Server do
   end
 
   @spec delete(charlist, map) :: any
-  defp delete(key, state) do
+  defp delete(id, state) do
+    # key (id) needs to be reversed for Riak datastore.
+    key = String.slice(id, -32..-1) <> String.slice(id, 0..15)
     Riak.delete(state.bucket, key)
   end
 
-  @spec get(charlist, map) :: {atom, map}
-  defp get(key, state) do
+  @spec get(charlist, map, boolean) :: {atom, map}
+  defp get(id, state, flip \\ true) do
+    key = if flip do
+      # key (id) needs to be reversed for Riak datastore.
+      key = String.slice(id, -32..-1) <> String.slice(id, 0..15)
+    else
+      id
+    end
     obj = Riak.find(state.bucket, key)
     case obj do
       nil -> {:not_found, key}
@@ -49,8 +57,10 @@ defmodule NebulaMetadata.Server do
   end
 
   @spec put(charlist, map, map) :: any
-  defp put(key, data, state) when is_map(data) do
-    {:ok, stringdata} = Poison.encode(data)
+  defp put(id, data, state) when is_map(data) do
+    # key (id) needs to be reversed for Riak datastore.
+    key = String.slice(id, -32..-1) <> String.slice(id, 0..15)
+    {:ok, stringdata} = Poison.encode(wrap_object(data))
     put(key, stringdata, state)
   end
   @spec put(charlist, charlist, map) :: any
@@ -67,6 +77,7 @@ defmodule NebulaMetadata.Server do
 
   @spec search(charlist, map) :: {atom, map}
   defp search(query, state) do
+    Logger.debug("in search with query: #{inspect query}")
     {:ok, {:search_results, results, _score, count}} = Riak.Search.query(state.cdmi_index, query)
     case count do
       1 -> get_data(results, state)
@@ -76,8 +87,10 @@ defmodule NebulaMetadata.Server do
   end
 
   @spec update(charlist, map, map) :: any
-  defp update(key, data, state) when is_map(data) do
-    {:ok, stringdata} = Poison.encode(data)
+  defp update(id, data, state) when is_map(data) do
+    # key (id) needs to be reversed for Riak datastore.
+    key = String.slice(id, -32..-1) <> String.slice(id, 0..15)
+    {:ok, stringdata} = Poison.encode(wrap_object(data))
     update(key, stringdata, state)
   end
   @spec update(charlist, map, map) :: any
@@ -93,9 +106,11 @@ defmodule NebulaMetadata.Server do
 
   @spec get_data(list, list) :: {atom, map}
   defp get_data(results, state) do
+    Logger.debug("search results: #{inspect results}")
     {_, rlist} = List.keyfind(results, state.cdmi_index, 0)
     {_, key} = List.keyfind(rlist, "_yz_rk", 0)
-    get(key, state)
+    Logger.debug("key: #{inspect key}")
+    get(key, state, false)
   end
 
   @doc """
@@ -110,6 +125,17 @@ defmodule NebulaMetadata.Server do
     :crypto.hmac(:sha, <<"domain">>, domain)
     |> Base.encode16
     |> String.downcase
+  end
+
+  @spec wrap_object(map) :: map
+  defp wrap_object(data) do
+    domain = Map.get(data, :domainURI, "/cdmi_domains/system_domain/")
+    hash = get_domain_hash(domain)
+    sp = hash <> data.parentURI <> data.objectName
+    %{
+      sp: sp,
+      cdmi: data
+    }
   end
 
 end
