@@ -21,9 +21,6 @@ defmodule NebulaMetadata.Server do
     {:reply, get(key, state), state}
   end
   def handle_call({:put, key, data}, _from, state) do
-    Logger.debug("Handle put:")
-    Logger.debug("Key: #{inspect key}")
-    Logger.debug("Data: #{inspect data}")
     {:reply, put(key, data, state), state}
   end
   def handle_call({:search, query}, _from, state) do
