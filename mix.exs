@@ -17,6 +17,7 @@ defmodule NebulaMetadata.Mixfile do
     [applications: [:logger,
                     :riak,
                     :poison,
+                    :memcache_client,
                     :logger_file_backend
                    ],
      env: [riak_bucket_type: <<"cdmi">>,
@@ -41,6 +42,7 @@ defmodule NebulaMetadata.Mixfile do
     [{:logger_file_backend, "~> 0.0"},
      {:riak, "~> 1.0"},
      {:poison, "~> 2.0"},
+     {:memcache_client, "~> 1.1.0"},
      {:exrm, "~> 1.0"}
     ]
   end
