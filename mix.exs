@@ -4,7 +4,7 @@ defmodule NebulaMetadata.Mixfile do
   def project do
     [app: :nebula_metadata,
      version: "0.1.0",
-     elixir: "~> 1.4-dev",
+     elixir: "~> 1.5",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps()]
@@ -42,7 +42,7 @@ defmodule NebulaMetadata.Mixfile do
     [{:logger_file_backend, "~> 0.0"},
      {:riak, "~> 1.0"},
      {:poison, "~> 2.1"},
-     {:memcache_client, "~> 1.1.0"},
+     {:memcache_client, "~> 1.1"},
      {:exrm, "~> 1.0"}
     ]
   end
