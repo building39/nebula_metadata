@@ -41,7 +41,7 @@ defmodule NebulaMetadata.Mixfile do
   defp deps do
     [{:logger_file_backend, "~> 0.0"},
      {:riak, "~> 1.0"},
-     {:poison, "~> 2.0"},
+     {:poison, "~> 2.1"},
      {:memcache_client, "~> 1.1.0"},
      {:exrm, "~> 1.0"}
     ]
