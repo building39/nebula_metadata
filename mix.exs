@@ -41,8 +41,8 @@ defmodule NebulaMetadata.Mixfile do
   defp deps do
     [{:logger_file_backend, "~> 0.0"},
      {:riak, "~> 1.0"},
-     {:poison, "~> 2.2", override: true},
-     {:memcache_client, "~> 1.1"},
+     {:poison, "~> 2.2"},
+     {:memcache_client, git: "https://github.com/tsharju/memcache_client.git", tag: "master"},
      {:exrm, "~> 1.0"}
     ]
   end
