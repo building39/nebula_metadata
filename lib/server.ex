@@ -210,7 +210,7 @@ defmodule NebulaMetadata.Server do
   end
 
   @spec wrap_object(map) :: map
-  defp wrap_object({:cdmi: {data}}) do
+  defp wrap_object({:cdmi, {data}}) do
     domain = Map.get(data, :domainURI, "/cdmi_domains/system_domain/")
     hash = get_domain_hash(domain)
     sp = if Map.has_key?(data, :parentURI) do
