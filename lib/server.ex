@@ -97,16 +97,15 @@ defmodule NebulaMetadata.Server do
 
   @spec put(charlist, map, map) :: any
   defp put(id, data, state) when is_map(data) do
-    #Logger.debug("metadata put key #{inspect id}")
+    Logger.debug("metadata put key #{inspect id}")
     # key (id) needs to be reversed for Riak datastore.
     key = String.slice(id, -32..-1) <> String.slice(id, 0..15)
     {:ok, stringdata} = Poison.encode(wrap_object(data))
     {rc, _} = put(key, stringdata, state)
     if rc == :ok do
+      Logger.debug(fn -> "Data is #{inspect data}" end)
       Memcache.Client.set(id, {:ok, data})
-      hash = get_domain_hash(data.domainURI)
-      query = "sp:" <> hash <> data.parentURI <> data.objectName
-      r = Memcache.Client.set(query, {:ok, data})
+      Memcache.Client.set(data.sp, {:ok, data})
       #Logger.debug("PUT memcache set: #{inspect r}")
     else
       #Logger.debug("PUT failed: #{inspect rc}")
