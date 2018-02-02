@@ -97,16 +97,15 @@ defmodule NebulaMetadata.Server do
 
   @spec put(charlist, map, map) :: any
   defp put(id, data, state) when is_map(data) do
-    #Logger.debug("metadata put key #{inspect id}")
+    Logger.debug("metadata put key #{inspect id}")
     # key (id) needs to be reversed for Riak datastore.
     key = String.slice(id, -32..-1) <> String.slice(id, 0..15)
     {:ok, stringdata} = Poison.encode(wrap_object(data))
     {rc, _} = put(key, stringdata, state)
     if rc == :ok do
+      Logger.debug(fn -> "Data is #{inspect data}" end)
       Memcache.Client.set(id, {:ok, data})
-      hash = get_domain_hash(data.domainURI)
-      query = "sp:" <> hash <> data.parentURI <> data.objectName
-      r = Memcache.Client.set(query, {:ok, data})
+      Memcache.Client.set(data.sp, {:ok, data})
       #Logger.debug("PUT memcache set: #{inspect r}")
     else
       #Logger.debug("PUT failed: #{inspect rc}")
@@ -211,18 +210,19 @@ defmodule NebulaMetadata.Server do
 
   @spec wrap_object(map) :: map
   defp wrap_object(data) do
-    domain = Map.get(data, :domainURI, "/cdmi_domains/system_domain/")
-    hash = get_domain_hash(domain)
-    sp = if Map.has_key?(data, :parentURI) do
-      hash <> data.parentURI <> data.objectName
-    else
-      # must be the root container
-      hash <> data.objectName
-    end
-    %{
-      sp: sp,
-      cdmi: data
-    }
+    # domain = Map.get(data, :domainURI, "/cdmi_domains/system_domain/")
+    # hash = get_domain_hash(domain)
+    # sp = if Map.has_key?(data, :parentURI) do
+    #   hash <> data.parentURI <> data.objectName
+    # else
+    #   # must be the root container
+    #   hash <> data.objectName
+    # end
+    # %{
+    #   sp: sp,
+    #   cdmi: data
+    # }
+    data
   end
 
 end
