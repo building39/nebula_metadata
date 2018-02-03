@@ -39,10 +39,10 @@ defmodule NebulaMetadata.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:logger_file_backend, "~> 0.0"},
-     {:riak, "~> 1.0"},
-     {:poison, "~> 2.1.0"},
-     {:memcache_client, git: "https://github.com/tsharju/memcache_client.git", tag: "v1.1.0"}
+    [{:logger_file_backend, "~> 0.0.10"},
+     {:riak, "~> 1.1.6"},
+     {:poison, ">= 3.1.0", override: true},
+     {:memcache_client, "~> 1.1.0"}
     ]
   end
 end
