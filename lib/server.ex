@@ -104,6 +104,7 @@ defmodule NebulaMetadata.Server do
     {rc, _} = put(key, stringdata, state)
     if rc == :ok do
       Logger.debug(fn -> "Data is #{inspect data}" end)
+      Logger.debug(fn -> "ID is #{inspect id}" end)
       Memcache.Client.set(id, {:ok, data})
       Memcache.Client.set(data.sp, {:ok, data})
       #Logger.debug("PUT memcache set: #{inspect r}")
@@ -127,24 +128,26 @@ defmodule NebulaMetadata.Server do
 
   @spec search(charlist, map) :: {atom, map}
   defp search(query, state) do
-    #Logger.debug("Searching for #{inspect query}")
+    Logger.debug("Searching for #{inspect query}")
     response = Memcache.Client.get(query)
     case response.status do
       :ok ->
+        Logger.debug(fn -> "cache hit on data: #{inspect response}" end)
         response.value
       _status ->
         {:ok, {:search_results, results, _score, count}} = Riak.Search.query(state.cdmi_index, query)
         case count do
           1 ->
             {:ok, data} = get_data(results, state)
+            Logger.debug(fn -> "got data: #{inspect data}" end)
             Memcache.Client.set(query, {:ok, data})
             Memcache.Client.set(data.objectID, {:ok, data})
             {:ok, data}
           0 ->
-            #Logger.debug("Search not found: #{inspect query}")
+            Logger.debug("Search not found: #{inspect query}")
             {:not_found, query}
           _ ->
-            #Logger.debug("Multiple results found")
+            Logger.debug("Multiple results found")
             {:multiples, results, count}
         end
     end
