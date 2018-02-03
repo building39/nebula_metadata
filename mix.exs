@@ -42,7 +42,7 @@ defmodule NebulaMetadata.Mixfile do
     [{:logger_file_backend, "~> 0.0"},
      {:riak, "~> 1.0"},
      {:poison, "~> 2.2"},
-     {:memcache_client, git: "https://github.com/tsharju/memcache_client.git", tag: "master"}
+     {:memcache_client, git: "https://github.com/tsharju/memcache_client.git", tag: "v1.1.0"}
     ]
   end
 end
