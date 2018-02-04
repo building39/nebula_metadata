@@ -57,7 +57,7 @@ defmodule NebulaMetadata.Server do
         end
         #Logger.debug("Now deleting from riak")
         # key (id) needs to be reversed for Riak datastore.
-        key = String.slice(id, -32..-1) <> String.slice(id, 0..15)
+        key = String.slice(id, -16..-1) <> String.slice(id, 0..31)
         Riak.delete(state.bucket, key)
       _other ->
         #Logger.debug("delete not found")
@@ -76,7 +76,7 @@ defmodule NebulaMetadata.Server do
       _status ->
         key = if flip do
           # key (id) needs to be reversed for Riak datastore.
-          key = String.slice(id, -32..-1) <> String.slice(id, 0..15)
+          key = String.slice(id, -16..-1) <> String.slice(id, 0..31)
         else
           id
         end
@@ -98,20 +98,22 @@ defmodule NebulaMetadata.Server do
   @spec put(charlist, map, map) :: any
   defp put(id, data, state) when is_map(data) do
     Logger.debug("metadata put key #{inspect id}")
+    Logger.debug(fn -> "metadata put data #{inspect data}" end)
     # key (id) needs to be reversed for Riak datastore.
-    key = String.slice(id, -32..-1) <> String.slice(id, 0..15)
-    {:ok, stringdata} = Poison.encode(wrap_object(data))
+    key = String.slice(id, -16..-1) <> String.slice(id, 0..31)
+    new_data = wrap_object(data)
+    {:ok, stringdata} = Poison.encode(new_data)
     {rc, _} = put(key, stringdata, state)
     if rc == :ok do
-      Logger.debug(fn -> "Data is #{inspect data}" end)
+      Logger.debug(fn -> "Data is #{inspect new_data}" end)
       Logger.debug(fn -> "ID is #{inspect id}" end)
-      Memcache.Client.set(id, {:ok, data})
-      Memcache.Client.set(data.sp, {:ok, data})
+      Memcache.Client.set(id, {:ok, new_data})
+      Memcache.Client.set(new_data.sp, {:ok, new_data})
       #Logger.debug("PUT memcache set: #{inspect r}")
     else
-      #Logger.debug("PUT failed: #{inspect rc}")
+      Logger.debug("PUT failed: #{inspect rc}")
     end
-    {rc, data}
+    {rc, new_data}
   end
   @spec put(charlist, charlist, map) :: any
   defp put(key, data, state) when is_binary(data) do
@@ -161,13 +163,15 @@ defmodule NebulaMetadata.Server do
 
   @spec update(charlist, map, map) :: any
   defp update(id, data, state) when is_map(data) do
-    #Logger.debug("Update key: #{inspect id}")
+    Logger.debug("Update key: #{inspect id}")
     # key (id) needs to be reversed for Riak datastore.
-    key = String.slice(id, -32..-1) <> String.slice(id, 0..15)
-    {:ok, stringdata} = Poison.encode(wrap_object(data))
+    key = String.slice(id, -16..-1) <> String.slice(id, 0..31)
+    Logger.debug(fn -> "Key: #{inspect key}" end)
+    new_data = wrap_object(data)
+    {:ok, stringdata} = Poison.encode(new_data)
     {rc, _} = update(key, stringdata, state)
     if rc == :ok do
-      Memcache.Client.set(id, {:ok, data})
+      Memcache.Client.set(id, {:ok, new_data})
       hash = get_domain_hash(data.domainURI)
       if Map.has_key?(data, :parentURI) do
         query = "sp:" <> hash <> data.parentURI <> data.objectName
@@ -178,7 +182,7 @@ defmodule NebulaMetadata.Server do
       r = Memcache.Client.set(query, {:ok, data})
       #Logger.debug("Update memcache set: #{inspect r}")
     else
-      #Logger.debug("Update failed: #{inspect rc}")
+      Logger.debug("Update failed: #{inspect rc}")
     end
     {rc, data}
   end
@@ -213,19 +217,19 @@ defmodule NebulaMetadata.Server do
 
   @spec wrap_object(map) :: map
   defp wrap_object(data) do
-    # domain = Map.get(data, :domainURI, "/cdmi_domains/system_domain/")
-    # hash = get_domain_hash(domain)
-    # sp = if Map.has_key?(data, :parentURI) do
-    #   hash <> data.parentURI <> data.objectName
-    # else
-    #   # must be the root container
-    #   hash <> data.objectName
-    # end
-    # %{
-    #   sp: sp,
-    #   cdmi: data
-    # }
-    data
+    domain = Map.get(data, :domainURI, "/cdmi_domains/system_domain/")
+    hash = get_domain_hash(domain)
+    sp = if Map.has_key?(data, :parentURI) do
+      hash <> data.parentURI <> data.objectName
+    else
+      # must be the root container
+      hash <> data.objectName
+    end
+    %{
+      sp: sp,
+      cdmi: data
+    }
+    # data
   end
 
 end
