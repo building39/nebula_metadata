@@ -34,38 +34,28 @@ defmodule NebulaMetadata.Server do
     {:reply, {:badrequest, request}, state}
   end
 
-  @spec delete(charlist, map) :: any
+  @spec delete(String.t, map) :: any
   defp delete(id, state) do
-    #Logger.debug("Deleting key: #{inspect id}")
     {rc, obj} = get(id, state)
-    #Logger.debug("Delete rc: #{inspect rc} obj: #{inspect obj}")
     case rc do
       :ok ->
         response = Memcache.Client.get(id)
-        #Logger.debug("Delete cache hit: #{inspect response.value}")
         if response.status == :ok do
           {:ok, obj} = response.value
-          #Logger.debug("Delete got a hit cache")
-          #Logger.debug("Deleting #{inspect id} from cache")
-          r = Memcache.Client.delete(id)
-          #Logger.debug("memcache response: #{inspect r}")
+          Memcache.Client.delete(id)
           hash = get_domain_hash(obj.domainURI)
           query = "sp:" <> hash <> obj.parentURI <> obj.objectName
-          #Logger.debug("Deleting #{inspect query} from cache")
-          r = Memcache.Client.delete(query)
-          #Logger.debug("memcache delete result: #{inspect r}")
+          Memcache.Client.delete(query)
         end
-        #Logger.debug("Now deleting from riak")
         # key (id) needs to be reversed for Riak datastore.
         key = String.slice(id, -16..-1) <> String.slice(id, 0..31)
         Riak.delete(state.bucket, key)
       _other ->
-        #Logger.debug("delete not found")
         {:not_found, id}
     end
   end
 
-  @spec get(charlist, map, boolean) :: {atom, map}
+  @spec get(String.t, map, boolean) :: {atom, map}
   defp get(id, state, flip \\ true) do
     #Logger.debug("metadata get key #{inspect id}")
     response = Memcache.Client.get(id)
@@ -76,7 +66,7 @@ defmodule NebulaMetadata.Server do
       _status ->
         key = if flip do
           # key (id) needs to be reversed for Riak datastore.
-          key = String.slice(id, -16..-1) <> String.slice(id, 0..31)
+          String.slice(id, -16..-1) <> String.slice(id, 0..31)
         else
           id
         end
@@ -95,13 +85,14 @@ defmodule NebulaMetadata.Server do
     end
   end
 
-  @spec put(charlist, map, map) :: any
+  @spec put(String.t, map, map) :: any
   defp put(id, data, state) when is_map(data) do
     Logger.debug("metadata put key #{inspect id}")
     Logger.debug(fn -> "metadata put data #{inspect data}" end)
     # key (id) needs to be reversed for Riak datastore.
     key = String.slice(id, -16..-1) <> String.slice(id, 0..31)
     new_data = wrap_object(data)
+    Logger.debug(fn -> "new_data: #{inspect new_data}" end)
     {:ok, stringdata} = Poison.encode(new_data)
     {rc, _} = put(key, stringdata, state)
     if rc == :ok do
@@ -115,7 +106,7 @@ defmodule NebulaMetadata.Server do
     end
     {rc, new_data}
   end
-  @spec put(charlist, charlist, map) :: any
+  @spec put(String.t, String.t, map) :: any
   defp put(key, data, state) when is_binary(data) do
     obj = Riak.find(state.bucket, key)
     case obj do
@@ -128,7 +119,7 @@ defmodule NebulaMetadata.Server do
     end
   end
 
-  @spec search(charlist, map) :: {atom, map}
+  @spec search(String.t, map) :: {atom, map}
   defp search(query, state) do
     Logger.debug("Searching for #{inspect query}")
     response = Memcache.Client.get(query)
@@ -161,16 +152,20 @@ defmodule NebulaMetadata.Server do
     get(key, state, false)
   end
 
-  @spec update(charlist, map, map) :: any
+  @spec update(String.t, map, map) :: any
   defp update(id, data, state) when is_map(data) do
     Logger.debug("Update key: #{inspect id}")
+    Logger.debug("Update data: #{inspect data, pretty: true}")
     # key (id) needs to be reversed for Riak datastore.
     key = String.slice(id, -16..-1) <> String.slice(id, 0..31)
     Logger.debug(fn -> "Key: #{inspect key}" end)
     new_data = wrap_object(data)
+    Logger.debug("wrapped data: #{inspect new_data, pretty: true}")
     {:ok, stringdata} = Poison.encode(new_data)
+    Logger.debug("JSON data: #{inspect stringdata}")
     {rc, _} = update(key, stringdata, state)
     if rc == :ok do
+      Logger.debug("update ok")
       Memcache.Client.set(id, {:ok, new_data})
       hash = get_domain_hash(data.domainURI)
       query = if Map.has_key?(data, :parentURI) do
@@ -183,10 +178,12 @@ defmodule NebulaMetadata.Server do
     else
       Logger.debug("Update failed: #{inspect rc}")
     end
-    {rc, data}
+    Logger.debug("update returning #{inspect {rc, new_data}}")
+    {rc, new_data}
   end
-  @spec update(charlist, map, map) :: any
-  defp update(key, data, state) when is_binary(data) do
+  @spec update(String.t, String.t, map) :: any
+  defp update(key, data, state) do
+    Logger.debug("updating with string data: #{inspect data}")
     obj = Riak.find(state.bucket, key)
     case obj do
       nil ->
@@ -201,12 +198,12 @@ defmodule NebulaMetadata.Server do
   @doc """
   Calculate a hash for a domain.
   """
-  @spec get_domain_hash(charlist) :: charlist
+  @spec get_domain_hash(String.t) :: String.t
   def get_domain_hash(domain) when is_list(domain) do
     #Logger.debug("get_domain_hash 1 for #{inspect domain}")
     get_domain_hash(<<domain>>)
   end
-  @spec get_domain_hash(binary) :: charlist
+  @spec get_domain_hash(binary) :: String.t
   def get_domain_hash(domain) when is_binary(domain) do
     #Logger.debug("get_domain_hash 2 for #{inspect domain}")
     :crypto.hmac(:sha, <<"domain">>, domain)
