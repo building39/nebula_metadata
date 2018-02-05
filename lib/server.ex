@@ -173,14 +173,13 @@ defmodule NebulaMetadata.Server do
     if rc == :ok do
       Memcache.Client.set(id, {:ok, new_data})
       hash = get_domain_hash(data.domainURI)
-      if Map.has_key?(data, :parentURI) do
-        query = "sp:" <> hash <> data.parentURI <> data.objectName
+      query = if Map.has_key?(data, :parentURI) do
+        "sp:" <> hash <> data.parentURI <> data.objectName
       else
         # Must be the root container
-        query = "sp:" <> hash <> data.objectName
+        "sp:" <> hash <> data.objectName
       end
-      r = Memcache.Client.set(query, {:ok, data})
-      #Logger.debug("Update memcache set: #{inspect r}")
+      Memcache.Client.set(query, {:ok, data})
     else
       Logger.debug("Update failed: #{inspect rc}")
     end
