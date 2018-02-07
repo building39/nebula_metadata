@@ -213,7 +213,12 @@ defmodule NebulaMetadata.Server do
 
   @spec wrap_object(map) :: map
   defp wrap_object(data) do
-    domain = Map.get(data, :domainURI, "/cdmi_domains/system_domain/")
+    Logger.debug("Object Name: #{inspect data.objectName}")
+    domain = if data.objectName == "/" or String.starts_with?(data.parentURI, "/cdmi_domains/") do
+      "/cdmi_domains/system_domain/"
+    else
+      Map.get(data, :domainURI, "/cdmi_domains/system_domain/")
+    end
     hash = get_domain_hash(domain)
     sp = if Map.has_key?(data, :parentURI) do
       hash <> data.parentURI <> data.objectName
