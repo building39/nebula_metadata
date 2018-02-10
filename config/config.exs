@@ -43,8 +43,9 @@ config :logger, :error_log,
   level: :error
 
 config :memcache_client,
-  transcoder: Memcache.Client.Transcoder.Erlang
-    
+  transcoder: Memcache.Client.Transcoder.Erlang,
+  expires: 5_000
+
 config :pooler, pools:
   [
     [
