@@ -113,7 +113,7 @@ defmodule NebulaMetadata.Server do
       nil ->
         Riak.put(Riak.Object.create(bucket: state.bucket, key: key, data: data))
         {:ok, data}
-      error ->
+      _error ->
         #Logger.debug("PUT find failed: #{inspect error}")
         {:dupkey, key, data}
     end
