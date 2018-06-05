@@ -7,6 +7,18 @@ defmodule NebulaMetadata.Mixfile do
      #elixir: "~> 1.6",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
+     test_coverage: [tool: ExCoveralls],
+     preferred_cli_env: [
+       coveralls: :test,
+       "coveralls.detail": :test,
+       "coveralls.post": :test,
+       "coveralls.html": :test
+     ],
+     dialyzer: [
+       plt_add_deps: true,
+       remove_defaults: [:unknown],
+       ignore_warnings: "dialyzer.ignore-warnings"
+     ],
      deps: deps()]
   end
 
@@ -42,6 +54,9 @@ defmodule NebulaMetadata.Mixfile do
     [{:logger_file_backend, "~> 0.0"},
      {:riak, "~> 1.0"},
      {:poison, "~> 2.2"},
+     {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
+     {:mock, "~> 0.3", only: :test},
+     {:excoveralls, "~> 0.8", only: :test},
      {:memcache_client, git: "https://github.com/tsharju/memcache_client.git", tag: "master"}
      #     {:exrm, "~> 1.0"}
     ]
