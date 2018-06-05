@@ -33,15 +33,19 @@ config :logger, format: "[$level] $message\n",
   backends: [{LoggerFileBackend, :error_log},
              {LoggerFileBackend, :debug_log},
              :console]
-  
+
 config :logger, :debug_log,
   path: "log/debug.log",
   level: :debug
-  
+
 config :logger, :error_log,
   path: "log/error.log",
   level: :error
-  
+
+config :memcache_client,
+  transcoder: Memcache.Client.Transcoder.Erlang,
+  expires: 5_000
+
 config :pooler, pools:
   [
     [

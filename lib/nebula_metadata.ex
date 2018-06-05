@@ -12,14 +12,16 @@ defmodule NebulaMetadata do
     bucket_type = Application.get_env(:nebula_metadata, :riak_bucket_type)
     bucket_name = Application.get_env(:nebula_metadata, :riak_bucket_name)
     bucket = {bucket_type, bucket_name}
+
     state = %NebulaMetadata.State{
-                host: Application.get_env(:nebula_metadata, :riak_serverip),
-                port: Application.get_env(:nebula_metadata, :riak_serverport),
-                bucket_type: bucket_type,
-                bucket_name: bucket_name,
-                bucket: bucket,
-                cdmi_index: Application.get_env(:nebula_metadata, :riak_cdmi_index)
-            }
+      host: Application.get_env(:nebula_metadata, :riak_serverip),
+      port: Application.get_env(:nebula_metadata, :riak_serverport),
+      bucket_type: bucket_type,
+      bucket_name: bucket_name,
+      bucket: bucket,
+      cdmi_index: Application.get_env(:nebula_metadata, :riak_cdmi_index)
+    }
+
     children = [
       worker(NebulaMetadata.Server, [state])
     ]
