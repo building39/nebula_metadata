@@ -5,7 +5,7 @@ defmodule NebulaMetadata.Mixfile do
     [
       app: :nebula_metadata,
       version: "0.3.0",
-      elixir: "~> 1.6",
+      elixir: "~> 1.9",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
@@ -34,7 +34,7 @@ defmodule NebulaMetadata.Mixfile do
         riak_bucket_type: <<"cdmi">>,
         riak_bucket_name: <<"cdmi">>,
         riak_cdmi_index: <<"cdmi_idx">>,
-        riak_serverip: "192.168.69.64",
+        riak_serverip: "192.168.2.11",
         riak_serverport: 8087,
         name_prefix: "cdmi"
       ],
@@ -53,12 +53,12 @@ defmodule NebulaMetadata.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:logger_file_backend, "~> 0.0.10"},
+      {:logger_file_backend, "~> 0.0.11"},
       {:riak, "~> 1.1.6"},
-      {:poison, "~> 3.1.0", override: true},
+      {:poison, "~> 4.0.1", override: true},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
       {:mock, "~> 0.3", only: :test},
-      {:excoveralls, "~> 0.8", only: :test},
+      {:excoveralls, "~> 0.11", only: :test},
       {:memcache_client, "~> 1.1.0"}
       #     {:exrm, "~> 1.0"}
     ]
