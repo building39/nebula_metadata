@@ -13,30 +13,37 @@ defmodule NebulaMetadata.Server do
   end
 
   def handle_call(:available, _from, state) do
+    Logger.debug("handle_call: :available")
     {:reply, Riak.ping(), state}
   end
 
   def handle_call({:delete, key}, _from, state) do
+    Logger.debug("handle_call: :delete")
     {:reply, delete(key, state), state}
   end
 
   def handle_call({:get, key}, _from, state) do
+    Logger.debug("handle_call: :get")
     {:reply, get(key, state), state}
   end
 
   def handle_call({:put, key, data}, _from, state) do
+    Logger.debug("handle_call: :put")
     {:reply, put(key, data, state), state}
   end
 
   def handle_call({:search, query}, _from, state) do
+    Logger.debug("handle_call: :search")
     {:reply, search(query, state), state}
   end
 
   def handle_call({:update, key, data}, _from, state) do
+    Logger.debug("handle_call: :update")
     {:reply, update(key, data, state), state}
   end
 
   def handle_call(request, _from, state) do
+    Logger.debug("handle_call: unknown request: #{inspect request}")
     {:reply, {:badrequest, request}, state}
   end
 
