@@ -47,7 +47,7 @@ defmodule NebulaMetadata.Server do
     {:reply, {:badrequest, request}, state}
   end
 
-  @spec delete(String.t(), map) :: any
+  @spec delete(String.t(), map()) :: map()
   defp delete(id, state) do
     {rc, obj} = get(id, state)
 
@@ -72,7 +72,7 @@ defmodule NebulaMetadata.Server do
     end
   end
 
-  @spec get(String.t(), map, boolean) :: {atom, map}
+  @spec get(String.t(), map(), boolean()) :: {atom(), map()}
   defp get(id, state, flip \\ true) do
     # Logger.debug("metadata get key #{inspect id}")
     response = Memcache.Client.get(id)
@@ -108,20 +108,20 @@ defmodule NebulaMetadata.Server do
     end
   end
 
-  @spec put(String.t(), map, map) :: any
+  @spec put(String.t(), map(), map()) :: tuple()
   defp put(id, data, state) when is_map(data) do
     Logger.debug("metadata put key #{inspect(id)}")
-    Logger.debug(fn -> "metadata put data #{inspect(data)}" end)
+    Logger.debug("metadata put data #{inspect(data)}")
     # key (id) needs to be reversed for Riak datastore.
     key = String.slice(id, -16..-1) <> String.slice(id, 0..31)
     new_data = wrap_object(data)
-    Logger.debug(fn -> "new_data: #{inspect(new_data)}" end)
+    Logger.debug("new_data: #{inspect(new_data)}")
     {:ok, stringdata} = Poison.encode(new_data)
     {rc, _} = put(key, stringdata, state)
 
     if rc == :ok do
-      Logger.debug(fn -> "Data is #{inspect(new_data)}" end)
-      Logger.debug(fn -> "ID is #{inspect(id)}" end)
+      Logger.debug("Data is #{inspect(new_data)}")
+      Logger.debug("ID is #{inspect(id)}")
       Memcache.Client.set(id, {:ok, new_data})
       Memcache.Client.set(new_data.sp, {:ok, new_data})
       # Logger.debug("PUT memcache set: #{inspect r}")
@@ -132,7 +132,7 @@ defmodule NebulaMetadata.Server do
     {rc, new_data}
   end
 
-  @spec put(String.t(), String.t(), map) :: any
+  @spec put(String.t(), String.t(), map()) :: {:ok | :dupkey, any(), any()}
   defp put(key, data, state) when is_binary(data) do
     obj = Riak.find(state.bucket, key)
 
@@ -147,7 +147,7 @@ defmodule NebulaMetadata.Server do
     end
   end
 
-  @spec search(String.t(), map) :: {atom, map}
+  @spec search(String.t(), map()) :: {atom(), map()}
   defp search(query, state) do
     Logger.debug("Searching for #{inspect(query)}")
     response = Memcache.Client.get(query)
@@ -180,14 +180,14 @@ defmodule NebulaMetadata.Server do
     end
   end
 
-  @spec get_data(list, list) :: {atom, map}
+  @spec get_data(list(), map()) :: {atom(), map()}
   defp get_data(results, state) do
     {_, rlist} = List.keyfind(results, state.cdmi_index, 0)
     {_, key} = List.keyfind(rlist, "_yz_rk", 0)
     get(key, state, false)
   end
 
-  @spec update(String.t(), map, map) :: any
+  @spec update(String.t(), map(), map()) :: any()
   defp update(id, data, state) when is_map(data) do
     Logger.debug("Update key: #{inspect(id)}")
     Logger.debug("Update data: #{inspect(data, pretty: true)}")
@@ -222,7 +222,7 @@ defmodule NebulaMetadata.Server do
     {rc, new_data}
   end
 
-  @spec update(String.t(), String.t(), map) :: any
+  @spec update(String.t(), String.t(), map()) :: any()
   defp update(key, data, state) do
     Logger.debug("updating with string data: #{inspect(data)}")
     obj = Riak.find(state.bucket, key)
@@ -241,21 +241,19 @@ defmodule NebulaMetadata.Server do
   @doc """
   Calculate a hash for a domain.
   """
-  @spec get_domain_hash(String.t()) :: String.t()
+  @spec get_domain_hash(list()) :: binary()
   def get_domain_hash(domain) when is_list(domain) do
     # Logger.debug("get_domain_hash 1 for #{inspect domain}")
-    get_domain_hash(<<domain>>)
-  end
-
-  @spec get_domain_hash(binary) :: String.t()
-  def get_domain_hash(domain) when is_binary(domain) do
+    #   get_domain_hash(<<domain>>)
+    # end
+    # def get_domain_hash(domain) when is_binary(domain) do
     # Logger.debug("get_domain_hash 2 for #{inspect domain}")
     :crypto.hmac(:sha, <<"domain">>, domain)
     |> Base.encode16()
     |> String.downcase()
   end
 
-  @spec wrap_object(map) :: map
+  @spec wrap_object(map()) :: map()
   defp wrap_object(data) do
     Logger.debug("Object Name: #{inspect(data.objectName)}")
 

@@ -2,31 +2,44 @@ defmodule NebulaMetadata.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :nebula_metadata,
-     version: "0.3.0",
-     elixir: "~> 1.6",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     deps: deps()]
+    [
+      app: :nebula_metadata,
+      version: "0.3.0",
+      elixir: "~> 1.6",
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ],
+      dialyzer: [
+        plt_add_deps: true,
+        remove_defaults: [:unknown],
+        ignore_warnings: "dialyzer.ignore-warnings"
+      ],
+      deps: deps()
+    ]
   end
 
   # Configuration for the OTP application
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger,
-                    :riak,
-                    :poison,
-                    :memcache_client,
-                    :logger_file_backend
-                   ],
-     env: [riak_bucket_type: <<"cdmi">>,
-           riak_bucket_name: <<"cdmi">>,
-           riak_cdmi_index: <<"cdmi_idx">>,
-           riak_serverip: "192.168.69.64",
-           riak_serverport: 8087,
-           name_prefix: "cdmi"],
-     mod: {NebulaMetadata, []}]
+    [
+      applications: [:logger, :riak, :poison, :memcache_client, :logger_file_backend],
+      env: [
+        riak_bucket_type: <<"cdmi">>,
+        riak_bucket_name: <<"cdmi">>,
+        riak_cdmi_index: <<"cdmi_idx">>,
+        riak_serverip: "192.168.69.64",
+        riak_serverport: 8087,
+        name_prefix: "cdmi"
+      ],
+      mod: {NebulaMetadata, []}
+    ]
   end
 
   # Dependencies can be Hex packages:
@@ -39,10 +52,15 @@ defmodule NebulaMetadata.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:logger_file_backend, "~> 0.0.10"},
-     {:riak, "~> 1.1.6"},
-     {:poison, ">= 3.1.0", override: true},
-     {:memcache_client, "~> 1.1.0"}
+    [
+      {:logger_file_backend, "~> 0.0.10"},
+      {:riak, "~> 1.1.6"},
+      {:poison, "~> 3.1.0", override: true},
+      {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
+      {:mock, "~> 0.3", only: :test},
+      {:excoveralls, "~> 0.8", only: :test},
+      {:memcache_client, "~> 1.1.0"}
+      #     {:exrm, "~> 1.0"}
     ]
   end
 end
