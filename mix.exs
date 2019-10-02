@@ -59,7 +59,7 @@ defmodule NebulaMetadata.Mixfile do
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
       {:mock, "~> 0.3", only: :test},
       {:excoveralls, "~> 0.11", only: :test},
-      {:memcache_client, "~> 1.1.0"}
+      {:memcache_client, "~> 1.1"}
       #     {:exrm, "~> 1.0"}
     ]
   end
