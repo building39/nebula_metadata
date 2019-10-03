@@ -255,7 +255,8 @@ defmodule NebulaMetadata.Server do
 
   @spec wrap_object(map()) :: map()
   defp wrap_object(data) do
-    Logger.debug("Object Name: #{inspect(data.objectName)}")
+    Logger.debug("Object: #{inspect(data, pretty: true)}")
+    Logger.debug("Object Name: #{inspect(data.cdmi.objectName)}")
 
     domain =
       if data.objectName == "/" do

@@ -29,16 +29,20 @@ use Mix.Config
 #
 #     import_config "#{Mix.env}.exs"
 
-config :logger, format: "[$level] $message\n",
+config :logger,
+  format: "[$level] $message\n",
+  metadata: [:file, :line],
   backends: [{LoggerFileBackend, :error_log},
              {LoggerFileBackend, :debug_log},
              :console]
 
 config :logger, :debug_log,
+  colors: [enabled: :true],
   path: "log/debug.log",
   level: :debug
 
 config :logger, :error_log,
+metadata: [:file, :line],
   path: "log/error.log",
   level: :error
 
