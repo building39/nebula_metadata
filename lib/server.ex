@@ -34,7 +34,10 @@ defmodule NebulaMetadata.Server do
 
   def handle_call({:search, query}, _from, state) do
     Logger.debug("handle_call: :search")
-    {:reply, search(query, state), state}
+    s = search(query, state)
+    Logger.debug("Search returned: #{inspect s, pretty: true}")
+    {:reply, s, state}
+    # {:reply, search(query, state), state}
   end
 
   def handle_call({:update, key, data}, _from, state) do
@@ -122,8 +125,8 @@ defmodule NebulaMetadata.Server do
     if rc == :ok do
       Logger.debug("Data is #{inspect(new_data)}")
       Logger.debug("ID is #{inspect(id)}")
-      Memcache.Client.set(id, {:ok, new_data})
-      Memcache.Client.set(new_data.sp, {:ok, new_data})
+      Memcache.Client.set(id, {:ok, stringdata})
+      Memcache.Client.set(new_data.sp, {:ok, stringdata})
       # Logger.debug("PUT memcache set: #{inspect r}")
     else
       Logger.debug("PUT failed: #{inspect(rc)}")
@@ -155,7 +158,7 @@ defmodule NebulaMetadata.Server do
     case response.status do
       :ok ->
         Logger.debug(fn -> "cache hit on data: #{inspect(response)}" end)
-        response.value
+        {:ok, response.value}
 
       _status ->
         {:ok, {:search_results, results, _score, count}} =
@@ -242,12 +245,12 @@ defmodule NebulaMetadata.Server do
   Calculate a hash for a domain.
   """
   @spec get_domain_hash(list()) :: binary()
-  def get_domain_hash(domain) when is_list(domain) do
+    # def get_domain_hash(domain) when is_list(domain) do
     # Logger.debug("get_domain_hash 1 for #{inspect domain}")
     #   get_domain_hash(<<domain>>)
     # end
-    # def get_domain_hash(domain) when is_binary(domain) do
-    # Logger.debug("get_domain_hash 2 for #{inspect domain}")
+  def get_domain_hash(domain) when is_binary(domain) do
+    Logger.debug("get_domain_hash 2 for #{inspect domain}")
     :crypto.hmac(:sha, <<"domain">>, domain)
     |> Base.encode16()
     |> String.downcase()
@@ -256,7 +259,7 @@ defmodule NebulaMetadata.Server do
   @spec wrap_object(map()) :: map()
   defp wrap_object(data) do
     Logger.debug("Object: #{inspect(data, pretty: true)}")
-    Logger.debug("Object Name: #{inspect(data.cdmi.objectName)}")
+    Logger.debug("Object Name: #{inspect(data.objectName)}")
 
     domain =
       if data.objectName == "/" do
@@ -265,6 +268,7 @@ defmodule NebulaMetadata.Server do
         Map.get(data, :domainURI, "/cdmi_domains/system_domain/")
       end
 
+    Logger.debug("Domain: #{inspect(domain, pretty: true)}")
     hash = get_domain_hash(domain)
 
     sp =
