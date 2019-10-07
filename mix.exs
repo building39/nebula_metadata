@@ -4,7 +4,7 @@ defmodule NebulaMetadata.Mixfile do
   def project do
     [
       app: :nebula_metadata,
-      version: "0.3.0",
+      version: "0.3.2",
       elixir: "~> 1.9",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
