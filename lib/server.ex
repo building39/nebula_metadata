@@ -35,7 +35,7 @@ defmodule NebulaMetadata.Server do
   def handle_call({:search, query}, _from, state) do
     Logger.debug("handle_call: :search")
     s = search(query, state)
-    Logger.debug("Search returned: #{inspect s, pretty: true}")
+    Logger.debug("Search returned: #{inspect(s, pretty: true)}")
     {:reply, s, state}
     # {:reply, search(query, state), state}
   end
@@ -46,7 +46,7 @@ defmodule NebulaMetadata.Server do
   end
 
   def handle_call(request, _from, state) do
-    Logger.debug("handle_call: unknown request: #{inspect request}")
+    Logger.debug("handle_call: unknown request: #{inspect(request)}")
     {:reply, {:badrequest, request}, state}
   end
 
@@ -83,7 +83,7 @@ defmodule NebulaMetadata.Server do
     case response.status do
       :ok ->
         {:ok, obj} = :erlang.binary_to_term(response.value)
-        Logger.debug("memcache response: #{inspect obj}")
+        Logger.debug("memcache response: #{inspect(obj)}")
         obj
 
       _status ->
@@ -105,12 +105,20 @@ defmodule NebulaMetadata.Server do
 
           _ ->
             {:ok, data} = Poison.decode(obj.data, keys: :atoms)
-            # Memcache.Client.set("sp:" <> data.sp, {:ok, data.cdmi})
-            # Memcache.Client.set(data.cdmi.objectID, {:ok, data.cdmi})
             Memcache.Client.set("sp:" <> data.sp, data.cdmi)
             Memcache.Client.set(data.cdmi.objectID, data.cdmi)
-            Logger.debug("Set memcached key #{inspect "sp:" <> data.sp} to #{inspect(data.cdmi, pretty: true)}")
-            Logger.debug("Set memcached key #{inspect data.cdmi.objectID} to #{inspect(data.cdmi, pretty: true)}")
+
+            Logger.debug(
+              "Set memcached key #{inspect("sp:" <> data.sp)} to #{
+                inspect(data.cdmi, pretty: true)
+              }"
+            )
+
+            Logger.debug(
+              "Set memcached key #{inspect(data.cdmi.objectID)} to #{
+                inspect(data.cdmi, pretty: true)
+              }"
+            )
 
             {:ok, data.cdmi}
         end
@@ -131,12 +139,13 @@ defmodule NebulaMetadata.Server do
     if rc == :ok do
       Logger.debug("Data is #{inspect(new_data)}")
       Logger.debug("ID is #{inspect(id)}")
-      Memcache.Client.set(id, stringdata)
-      Memcache.Client.set(new_data.sp, stringdata)
-            # Memcache.Client.set(id, {:ok, stringdata})
-            # Memcache.Client.set(new_data.sp, {:ok, stringdata})
-      Logger.debug("Set memcached key #{inspect new_data.sp} to #{inspect(stringdata, pretty: true)}")
-      Logger.debug("Set memcached key #{inspect id} to #{inspect(stringdata, pretty: true)}")
+      Memcache.Client.set(id, data)
+      Memcache.Client.set(new_data.sp, data)
+      Logger.debug(
+        "Set memcached key #{inspect(new_data.sp)} to #{inspect(data, pretty: true)}"
+      )
+
+      Logger.debug("Set memcached key #{inspect(id)} to #{inspect(data, pretty: true)}")
       # Logger.debug("PUT memcache set: #{inspect r}")
     else
       Logger.debug("PUT failed: #{inspect(rc)}")
@@ -179,12 +188,15 @@ defmodule NebulaMetadata.Server do
           1 ->
             {:ok, data} = get_data(results, state)
             Logger.debug(fn -> "got data: #{inspect(data)}" end)
-            Memcache.Client.set(query, data)
-            Memcache.Client.set(data.objectID, data)
-            # Memcache.Client.set(query, {:ok, data})
-            # Memcache.Client.set(data.objectID, {:ok, data})
-            Logger.debug("Set memcached key #{inspect query} to #{inspect(data, pretty: true)}")
-            Logger.debug("Set memcached key #{inspect data.objectID} to #{inspect(data, pretty: true)}")
+            Memcache.Client.set(query, data.cdmi)
+            Memcache.Client.set(data.objectID, data.cdmi)
+
+            Logger.debug("Set memcached key #{inspect(query)} to #{inspect(data.cdmi, pretty: true)}")
+
+            Logger.debug(
+              "Set memcached key #{inspect(data.objectID)} to #{inspect(data.cdmi, pretty: true)}"
+            )
+
             {:ok, data}
 
           0 ->
@@ -220,8 +232,6 @@ defmodule NebulaMetadata.Server do
 
     if rc == :ok do
       Logger.debug("update ok")
-      # Memcache.Client.set(id, {:ok, stringdata})
-      Memcache.Client.set(id, stringdata)
       hash = get_domain_hash(data.domainURI)
 
       query =
@@ -232,10 +242,10 @@ defmodule NebulaMetadata.Server do
           "sp:" <> hash <> data.objectName
         end
 
-      # Memcache.Client.set(query, {:ok, stringdata})
-      Memcache.Client.set(query, stringdata)
-      Logger.debug("Set memcached key #{inspect id} to #{inspect(stringdata, pretty: true)}")
-      Logger.debug("Set memcached key #{inspect query} to #{inspect(stringdata, pretty: true)}")
+      Memcache.Client.set(query, new_data)
+      Memcache.Client.set(id, new_data)
+      Logger.debug("Set memcached key #{inspect(id)} to #{inspect(data, pretty: true)}")
+      Logger.debug("Set memcached key #{inspect(query)} to #{inspect(data, pretty: true)}")
     else
       Logger.debug("Update failed: #{inspect(rc)}")
     end
@@ -264,12 +274,13 @@ defmodule NebulaMetadata.Server do
   Calculate a hash for a domain.
   """
   @spec get_domain_hash(binary()) :: binary()
-    # def get_domain_hash(domain) when is_list(domain) do
-    # Logger.debug("get_domain_hash 1 for #{inspect domain}")
-    #   get_domain_hash(<<domain>>)
-    # end
+  # def get_domain_hash(domain) when is_list(domain) do
+  # Logger.debug("get_domain_hash 1 for #{inspect domain}")
+  #   get_domain_hash(<<domain>>)
+  # end
   def get_domain_hash(domain) when is_binary(domain) do
-    Logger.debug("get_domain_hash 2 for #{inspect domain}")
+    Logger.debug("get_domain_hash 2 for #{inspect(domain)}")
+
     :crypto.hmac(:sha, <<"domain">>, domain)
     |> Base.encode16()
     |> String.downcase()
