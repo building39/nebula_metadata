@@ -176,7 +176,7 @@ defmodule NebulaMetadata.Server do
 
     case response.status do
       :ok ->
-        {:ok, obj} = :erlang.binary_to_term(response.value)
+        obj = :erlang.binary_to_term(response.value)
         Logger.debug(fn -> "cache hit on data: #{inspect(obj)}" end)
         {:ok, obj}
 
