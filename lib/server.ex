@@ -188,13 +188,13 @@ defmodule NebulaMetadata.Server do
           1 ->
             {:ok, data} = get_data(results, state)
             Logger.debug(fn -> "got data: #{inspect(data)}" end)
-            Memcache.Client.set(query, data.cdmi)
-            Memcache.Client.set(data.objectID, data.cdmi)
+            Memcache.Client.set(query, data)
+            Memcache.Client.set(data.objectID, data)
 
-            Logger.debug("Set memcached key #{inspect(query)} to #{inspect(data.cdmi, pretty: true)}")
+            Logger.debug("Set memcached key #{inspect(query)} to #{inspect(data, pretty: true)}")
 
             Logger.debug(
-              "Set memcached key #{inspect(data.objectID)} to #{inspect(data.cdmi, pretty: true)}"
+              "Set memcached key #{inspect(data.objectID)} to #{inspect(data, pretty: true)}"
             )
 
             {:ok, data}
