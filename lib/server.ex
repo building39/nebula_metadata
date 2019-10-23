@@ -62,6 +62,7 @@ defmodule NebulaMetadata.Server do
           {:ok, obj} = :erlang.binary_to_term(response.value)
           Memcache.Client.delete(id)
           hash = get_domain_hash(obj.domainURI)
+          Logger.debug("setting parentURI")
           query = "sp:" <> hash <> obj.parentURI <> obj.objectName
           Memcache.Client.delete(query)
         end
@@ -181,6 +182,7 @@ defmodule NebulaMetadata.Server do
         {:ok, obj}
 
       _status ->
+        Logger.debug("Cache miss")
         {:ok, {:search_results, results, _score, count}} =
           Riak.Search.query(state.cdmi_index, query)
 
@@ -242,16 +244,16 @@ defmodule NebulaMetadata.Server do
           "sp:" <> hash <> data.objectName
         end
 
-      Memcache.Client.set(query, new_data)
-      Memcache.Client.set(id, new_data)
+      Memcache.Client.set(query, data)
+      Memcache.Client.set(id, data)
       Logger.debug("Set memcached key #{inspect(id)} to #{inspect(data, pretty: true)}")
       Logger.debug("Set memcached key #{inspect(query)} to #{inspect(data, pretty: true)}")
     else
       Logger.debug("Update failed: #{inspect(rc)}")
     end
 
-    Logger.debug("update returning #{inspect({rc, new_data})}")
-    {rc, new_data}
+    Logger.debug("update returning #{inspect({rc, new_data.cdmi})}")
+    {rc, new_data.cdmi}
   end
 
   @spec update(String.t(), String.t(), map()) :: any()
